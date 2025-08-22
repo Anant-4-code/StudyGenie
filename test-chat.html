@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyGenie Chat Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .chat-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .source-section {
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: inherit;
+        }
+        #sourceContent {
+            height: 100px;
+            background-color: #f9f9f9;
+        }
+        #message {
+            height: 60px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .response {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f4fd;
+            border-left: 4px solid #007bff;
+            border-radius: 5px;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <h1>StudyGenie Chat Test</h1>
+        <p>Test the basic chat functionality with source context using Gemini API</p>
+        
+        <div class="source-section">
+            <label for="sourceContent">Source Material (Optional):</label>
+            <textarea id="sourceContent" placeholder="Paste any source material here that you want the AI to reference when answering your question..."></textarea>
+        </div>
+        
+        <div>
+            <label for="message">Your Question:</label>
+            <textarea id="message" placeholder="Ask your question here..."></textarea>
+        </div>
+        
+        <button onclick="sendMessage()" id="sendBtn">Send Message</button>
+        
+        <div id="response"></div>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const message = document.getElementById('message').value.trim();
+            const sourceContent = document.getElementById('sourceContent').value.trim();
+            const responseDiv = document.getElementById('response');
+            const sendBtn = document.getElementById('sendBtn');
+            
+            if (!message) {
+                alert('Please enter a message');
+                return;
+            }
+            
+            // Show loading state
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Sending...';
+            responseDiv.innerHTML = '<div class="response loading">Generating response...</div>';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/chat/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        sourceContent: sourceContent
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    responseDiv.innerHTML = `
+                        <div class="response">
+                            <strong>AI Response (${data.aiProvider}):</strong><br>
+                            ${data.reply.replace(/\n/g, '<br>')}
+                            <br><br>
+                            <small>Generated at: ${new Date(data.timestamp).toLocaleString()}</small>
+                        </div>
+                    `;
+                } else {
+                    responseDiv.innerHTML = `
+                        <div class="response error">
+                            <strong>Error:</strong> ${data.error || 'Unknown error occurred'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                responseDiv.innerHTML = `
+                    <div class="response error">
+                        <strong>Connection Error:</strong> ${error.message}<br>
+                        Make sure the server is running on port 5000
+                    </div>
+                `;
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send Message';
+            }
+        }
+        
+        // Allow Enter key to send message (Ctrl+Enter for new line)
+        document.getElementById('message').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.ctrlKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>

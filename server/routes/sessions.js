@@ -1,0 +1,13 @@
+const express = require('express');
+const router = express.Router();
+
+router.post('/create', (req, res) => {
+  res.json({ sessionId: 'demo-session-id' });
+});
+
+module.exports = router;
+
+
+
+
+
