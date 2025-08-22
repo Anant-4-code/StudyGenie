@@ -106,3 +106,4 @@ const AIService = {
 };
 
 module.exports = AIService;
+module.exports.sessionSources = sessionSources; // Export sessionSources
