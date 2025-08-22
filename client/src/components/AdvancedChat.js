@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Plus, Upload, Link as LinkIcon, FileText, Settings, Brain, Target, Zap } from 'lucide-react';
+import { ArrowLeft, Plus, Settings, Brain, Target, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import SessionSetup from './advanced/SessionSetup';
-import SourceUpload from './advanced/SourceUpload';
 import PreferencesSetup from './advanced/PreferencesSetup';
 import RoadmapGenerator from './advanced/RoadmapGenerator';
 import TutorChat from './advanced/TutorChat';
@@ -28,14 +27,13 @@ const AdvancedChat = () => {
   });
 
   const steps = [
-    { id: 1, name: 'Create Session', icon: Plus, component: SessionSetup },
-    { id: 2, name: 'Add Sources', icon: Upload, component: SourceUpload },
-    { id: 3, name: 'Set Preferences', icon: Settings, component: PreferencesSetup },
-    { id: 4, name: 'Generate Roadmap', icon: Target, component: RoadmapGenerator },
-    { id: 5, name: 'Start Learning', icon: Brain, component: TutorChat },
-    { id: 6, name: 'Interactive Tools', icon: Zap, component: LearningTools },
-    { id: 7, name: 'Progress Stats', icon: Target, component: StatsDashboard },
-    { id: 8, name: 'Improvement Plan', icon: Target, component: ImprovementTutor }
+    { id: 1, name: 'Create Session & Add Source', icon: Plus, component: SessionSetup },
+    { id: 2, name: 'Set Preferences', icon: Settings, component: PreferencesSetup },
+    { id: 3, name: 'Generate Roadmap', icon: Target, component: RoadmapGenerator },
+    { id: 4, name: 'Start Learning', icon: Brain, component: TutorChat },
+    { id: 5, name: 'Interactive Tools', icon: Zap, component: LearningTools },
+    { id: 6, name: 'Progress Stats', icon: Target, component: StatsDashboard },
+    { id: 7, name: 'Improvement Plan', icon: Target, component: ImprovementTutor }
   ];
 
   const updateSessionData = (newData) => {
