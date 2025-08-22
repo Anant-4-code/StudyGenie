@@ -34,11 +34,6 @@ app.use('/api/', apiLimiter);
 app.use(express.json()); // For JSON payloads
 app.use(express.urlencoded({ extended: true })); // For URL-encoded payloads
 
-// Serve static files from the React app in production
-if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, '../client/build')));
-}
-
 // --- API Routes ---
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/chat', require('./routes/chat'));
@@ -53,13 +48,6 @@ app.use('/api/stats', require('./routes/stats'));
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', message: 'Server is healthy' });
 });
-
-// All remaining requests return the React app, for production deployment
-if (process.env.NODE_ENV === 'production') {
-    app.get('*', (req, res) => {
-        res.sendFile(path.resolve(__dirname, '../client/build', 'index.html'));
-    });
-}
 
 // --- Error Handling Middleware ---
 app.use((err, req, res, next) => {
