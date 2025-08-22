@@ -1,12 +1,12 @@
-// const { GoogleGenerativeAI } = require('@google/generative-ai'); // Disconnect Gemini API
-// require('dotenv').config(); // Not needed if API is disconnected
+const { GoogleGenerativeAI } = require('@google/generative-ai'); // Re-enable Gemini API
+require('dotenv').config(); // Re-enable dotenv config
 
-// // Initialize the Gemini API
-// const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Initialize the Gemini API
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 class GeminiService {
   constructor() {
-    // this.model = genAI.getGenerativeModel({ model: 'gemini-pro' }); // Disconnect model initialization
+    this.model = genAI.getGenerativeModel({ model: 'gemini-pro' }); // Re-enable model initialization
   }
 
   /**
@@ -16,9 +16,24 @@ class GeminiService {
    * @returns {Promise<string>} - The generated content
    */
   async generateContent(prompt, options = {}) {
-    // Always return a mock response when Gemini is disconnected
-    console.warn("Gemini API is disconnected. Returning mock content.");
-    return `Mock content for prompt: "${prompt}"`;
+    try {
+      const generationConfig = {
+        temperature: options.temperature || 0.7,
+        topP: options.topP || 0.9,
+        maxOutputTokens: options.maxOutputTokens || 2048,
+      };
+
+      const result = await this.model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig,
+      });
+
+      const response = await result.response;
+      return response.text();
+    } catch (error) {
+      console.error('Gemini API Error:', error);
+      throw new Error(`Failed to generate content: ${error.message}`);
+    }
   }
 
   /**

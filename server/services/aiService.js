@@ -1,17 +1,17 @@
-// const { GoogleGenerativeAI } = require('@google/generative-ai'); // Removed GoogleGenerativeAI import
+const { GoogleGenerativeAI } = require('@google/generative-ai'); // Re-enabled GoogleGenerativeAI import
 const { v4: uuidv4 } = require('uuid'); // For unique session IDs
 
 // Access your API key as an environment variable (preferable for security)
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 // Initialize Google Generative AI only if API key is provided and not a placeholder
-let genAI; // Keep declaration but no initialization
-// if (GEMINI_API_KEY && GEMINI_API_KEY !== 'YOUR_GEMINI_API_KEY') {
-//   genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-//   console.log("Gemini API initialized.");
-// } else {
-  console.warn("Gemini API is disconnected. Using mock AI responses."); // Always warn now
-// }
+let genAI;
+if (GEMINI_API_KEY && GEMINI_API_KEY !== 'YOUR_GEMINI_API_KEY') {
+  genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+  console.log("Gemini API initialized.");
+} else {
+  console.warn("Gemini API key not found or is a placeholder. Using mock AI responses.");
+}
 
 // In-memory store for session-specific sources (for advanced chat context)
 const sessionSources = {};
@@ -25,8 +25,21 @@ const AIService = {
    * @returns {Promise<string>} - The AI-generated response.
    */
   async generateResponse(prompt, type = 'basic', context = {}) {
-    // Always use mock response as Gemini API is disconnected
-    return this.generateMockResponse(prompt, type, context);
+    if (genAI) {
+      try {
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        return response.text();
+      } catch (error) {
+        console.error("Error generating content with Gemini API:", error);
+        // Fallback to mock response on API error
+        return this.generateMockResponse(prompt, type, context);
+      }
+    } else {
+      // Use mock response if API key is not set
+      return this.generateMockResponse(prompt, type, context);
+    }
   },
 
   /**
@@ -41,8 +54,8 @@ const AIService = {
     const sourceContent = sessionSources[sessionId] ? sessionSources[sessionId].content : 'No source provided.';
     const prompt = `Based on the following source content and our previous conversation, respond to the user's message.\n\nSource Content: ${sourceContent}\n\nUser: ${userMessage}`;
 
-    // Always use mock response as Gemini API is disconnected
-    return this.generateMockResponse(prompt, type, { sourceContent });
+    // Use real API or mock based on genAI availability
+    return this.generateResponse(prompt, type, { sourceContent });
   },
 
   /**
