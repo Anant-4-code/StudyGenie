@@ -43,8 +43,8 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", 'data:', 'https:'],
-      connectSrc: ["'self'", 'https://*.googleapis.com'],
+      imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
+      connectSrc: ["'self'", 'https://*.googleapis.com', 'https://studygenie-qz9t.onrender.com'],
       frameSrc: ["'self'"],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: []
@@ -55,17 +55,17 @@ app.use(helmet({
 
 // Enable CORS with multiple origins
 const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:5001',
-  process.env.FRONTEND_URL
-].filter(Boolean);
+  'https://study-genie-sooty.vercel.app',
+  'https://study-genie-git-main-anant-4-codes-projects.vercel.app',
+  'http://localhost:3000' // For local development
+];
 
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
       return callback(new Error(msg), false);
     }
     return callback(null, true);
