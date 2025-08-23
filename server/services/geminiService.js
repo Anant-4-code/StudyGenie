@@ -53,7 +53,7 @@ class GeminiService {
     }
   }
 
-  _buildPrompt(content, type) {
+_buildPrompt(content, type) {
     const prompts = {
       quiz: `Generate 5 multiple-choice questions based on the following content. 
              Each question should have 4 options and indicate the correct answer.

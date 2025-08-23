@@ -5,24 +5,35 @@ const router = express.Router();
 // Generate learning roadmap
 router.post('/generate', async (req, res) => {
   try {
-    const { topic, level = 'beginner', timeframe = '4 weeks', goals = [] } = req.body;
+    const { sessionId, topic, level = 'beginner', timeframe = '4 weeks', goals = [], description = '', preferences = {} } = req.body;
     
+    if (!sessionId) {
+      return res.status(400).json({ error: 'Session ID is required' });
+    }
     if (!topic) {
       return res.status(400).json({ error: 'Topic is required' });
     }
 
-    const { response: roadmap, aiProvider } = await AIService.generateRoadmap(topic, {
-      level,
-      timeframe
-    });
-
-    res.json({
-      roadmap,
+    const roadmapParams = {
       topic,
       level,
       timeframe,
       goals,
-      aiProvider,
+      description,
+      preferences
+    };
+
+    const roadmap = await AIService.generateRoadmap(sessionId, roadmapParams);
+
+    res.json({
+      roadmap,
+      sessionId,
+      topic,
+      level,
+      timeframe,
+      goals,
+      description,
+      preferences,
       timestamp: new Date().toISOString(),
       status: 'success'
     });
@@ -30,7 +41,8 @@ router.post('/generate', async (req, res) => {
     console.error('Roadmap Generation Error:', error);
     res.status(500).json({
       error: 'Failed to generate roadmap',
-      message: 'Please try again later'
+      message: 'Please try again later',
+      details: error.message
     });
   }
 });

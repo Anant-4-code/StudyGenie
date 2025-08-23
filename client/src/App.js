@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import LandingPage from './components/LandingPage';
 import BasicChat from './components/BasicChat';
+import BasicChatV2 from './components/BasicChatV2';
 import AdvancedChat from './components/AdvancedChat';
 import Navbar from './components/Navbar';
 
@@ -13,7 +14,7 @@ function App() {
         <Navbar />
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/basic-chat" element={<BasicChat />} />
+          <Route path="/basic-chat" element={<BasicChatV2 />} />
           <Route path="/advanced-chat" element={<AdvancedChat />} />
         </Routes>
         <Toaster 

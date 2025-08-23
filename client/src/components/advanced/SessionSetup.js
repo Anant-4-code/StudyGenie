@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Sparkles, Target, Clock, Upload, Link as LinkIcon, FileText } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
-import { apiRequest, ENDPOINTS } from '../config/api';
+import { apiRequest, ENDPOINTS } from '../../config/api'; // Corrected import path
 import toast from 'react-hot-toast';
 
 const SessionSetup = ({ sessionData, updateSessionData, nextStep }) => {

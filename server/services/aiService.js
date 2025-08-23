@@ -3,6 +3,7 @@ const { v4: uuidv4 } = require('uuid'); // For unique session IDs
 
 // Access your API key as an environment variable (preferable for security)
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const { sessionSources } = require('../utils/sessionStore'); // Import sessionSources from shared store
 
 // Initialize Google Generative AI only if API key is provided and not a placeholder
 let genAI;
@@ -13,8 +14,8 @@ if (GEMINI_API_KEY && GEMINI_API_KEY !== 'YOUR_GEMINI_API_KEY') {
   console.warn("Gemini API key not found or is a placeholder. Using mock AI responses.");
 }
 
-// In-memory store for session-specific sources (for advanced chat context)
-const sessionSources = {};
+// // In-memory store for session-specific sources (for advanced chat context)
+// const sessionSources = {}; // Removed as it's now from shared module
 
 const AIService = {
   /**
@@ -59,23 +60,73 @@ const AIService = {
   },
 
   /**
+   * Generates a personalized learning roadmap using the Gemini API.
+   * @param {string} sessionId - The ID of the current session.
+   * @param {object} roadmapParams - Parameters for roadmap generation (topic, level, timeframe, goals, preferences).
+   * @param {string} roadmapParams.topic - The main topic for the roadmap.
+   * @param {string} [roadmapParams.level='beginner'] - Learning level (beginner, intermediate, advanced).
+   * @param {string} [roadmapParams.timeframe='4 weeks'] - Desired timeframe for the roadmap.
+   * @param {Array<string>} [roadmapParams.goals=[]] - Specific learning goals.
+   * @param {object} [roadmapParams.preferences={}] - User learning preferences (style, tools, pace, focus).
+   * @returns {Promise<string>} - The AI-generated roadmap in a structured format.
+   */
+  async generateRoadmap(sessionId, roadmapParams) {
+    const { topic, level = 'beginner', timeframe = '4 weeks', goals = [], preferences = {} } = roadmapParams;
+    const sourceContent = sessionSources[sessionId] ? sessionSources[sessionId].content : 'No specific source content provided.';
+
+    const prompt = `
+Generate a detailed, personalized learning roadmap or syllabus for a student.
+
+**Subject Area:** ${topic}
+**Description/Context:** ${roadmapParams.description || 'No additional description provided.'}
+**Learning Level:** ${level}
+**Learning Style/Technique:** ${preferences.style || 'Mixed (e.g., visual, auditory, kinesthetic)'}
+**Preferred Learning Tools:** ${preferences.tools ? preferences.tools.join(', ') : 'Any relevant tools'}
+**Learning Pace:** ${preferences.pace || 'Self-paced'}
+**Learning Focus:** ${preferences.focus || 'Comprehensive understanding'}
+**Desired Timeframe:** ${timeframe}
+**Specific Goals:** ${goals.length > 0 ? goals.join(', ') : 'Comprehensive understanding of the topic.'}
+
+**Source Material (if provided):**
+\`\`\`
+${sourceContent}
+\`\`\`
+
+Create a structured roadmap that includes:
+1.  **Overview:** A brief summary of the roadmap's objective.
+2.  **Prerequisites:** Any foundational knowledge required.
+3.  **Key Modules/Units:** Break down the topic into logical sections.
+4.  **Topics within Modules:** List specific concepts or sub-topics for each module.
+5.  **Learning Activities/Resources:** Suggest types of activities (e.g., readings, videos, exercises, projects) and resources (e.g., textbooks, online courses, articles).
+6.  **Assessment/Milestones:** How progress can be tracked (e.g., quizzes, practice problems, project completion).
+7.  **Interactive Tools Integration:** Suggest how interactive tools (quizzes, flashcards, mind maps) can be used at each stage.
+8.  **Expected Outcomes:** What the student should be able to do after completing the roadmap.
+
+Return the roadmap in a clear, readable format (e.g., Markdown). Prioritize understanding and application based on the provided source and preferences.
+`;
+
+    // Call the generic generateResponse, specifying 'roadmap' type
+    return this.generateResponse(prompt, 'roadmap', { sourceContent });
+  },
+
+  /**
    * Provides intelligent mock AI responses for various scenarios.
    * This is a fallback when the actual Gemini API is not available or fails.
    * @param {string} prompt - The user's prompt.
    * @param {string} type - The type of interaction (e.g., 'basic', 'roadmap', 'quiz').
-   * @param {object} context - Additional context for generating mock responses (e.g., sourceContent).
+   * @param {object} context - Additional context for generating mock responses (e.g., sourceContent, userMessage).
    * @returns {string} - A mock AI response.
    */
   generateMockResponse(prompt, type, context = {}) {
     console.warn("Generating mock AI response for type:", type, "Prompt:", prompt);
     const lowerCasePrompt = prompt.toLowerCase();
-    const { sourceContent } = context;
+    const { sourceContent, userMessage } = context; // Include userMessage in context
 
     if (type === 'tutor' && sourceContent) {
       if (lowerCasePrompt.includes('summary')) {
         return `Based on the provided source, here's a brief summary: This document primarily discusses [main topic]. It highlights [key point 1] and [key point 2].`;
       } else if (lowerCasePrompt.includes('question') || lowerCasePrompt.includes('explain')) {
-        return `Regarding your question about "${userMessage}" based on the source, [provide a relevant mock explanation from source].`;
+        return `Regarding your question about "${userMessage || prompt}" based on the source, [provide a relevant mock explanation from source].`;
       } else if (lowerCasePrompt.includes('physics')) {
         return `From the source, in physics, we can infer that the principles of motion are discussed, focusing on Newton's laws.`;
       } else if (lowerCasePrompt.includes('math')) {
@@ -83,12 +134,12 @@ const AIService = {
       } else if (lowerCasePrompt.includes('chemistry')) {
         return `In chemistry, the source covers molecular structures and chemical reactions, fundamental for understanding matter.`;
       }
-      return `Understood. Based on the source you provided, let's explore your query: "${lowerCasePrompt}". How can I assist further with this material?`;
+      return `Understood. Based on the source you provided, let's explore your query: "${userMessage || prompt}". How can I assist further with this material?`;
     }
 
     switch (type) {
       case 'roadmap':
-        return `Here's a personalized roadmap for you based on your input: 1. Core Concepts, 2. Advanced Topics, 3. Practice Quizzes.`;
+        return `Here's a **personalized mock roadmap** for you based on your input and source content:\n\n**Overview:** This roadmap will guide you through understanding [Topic from Prompt] with a focus on [Key points from Source if available].\n\n**Modules:**\n- **Module 1: Introduction to [Topic]** (Referencing: ${sourceContent ? 'Your Source' : 'General Concepts'})\n- **Module 2: Core Principles** (Referencing: ${sourceContent ? 'Your Source' : 'Textbook Examples'})\n- **Module 3: Advanced Applications** (Referencing: ${sourceContent ? 'Your Source' : 'Real-world Scenarios'})\n\n**Activities:** Readings, Quizzes, Practice Problems.\n**Timeline:** Customizable based on your pace.\n**Next Steps:** Let's start with Module 1!`;
       case 'quiz':
         return `Let's start a quiz! Question 1: What is the capital of France? (Mock response)`;
       case 'basic':

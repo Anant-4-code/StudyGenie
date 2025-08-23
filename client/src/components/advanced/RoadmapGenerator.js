@@ -2,20 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, Brain, Clock, CheckCircle, Edit3, ArrowRight, Sparkles, BookOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { apiRequest, ENDPOINTS } from '../../config/api'; // Import API utilities
 
 const RoadmapGenerator = ({ sessionData, updateSessionData, nextStep, prevStep }) => {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [roadmap, setRoadmap] = useState(null);
+  const [roadmap, setRoadmap] = useState(sessionData.roadmap || null);
   const [currentStep, setCurrentStep] = useState(0);
   const [generationProgress, setGenerationProgress] = useState(0);
 
   useEffect(() => {
-    if (isGenerating) {
-      simulateGeneration();
+    if (isGenerating && !roadmap) {
+      handleGenerateRoadmap(); // Start actual generation
+    } else if (roadmap) {
+        setIsGenerating(false);
     }
-  }, [isGenerating]);
+  }, [isGenerating, roadmap]);
 
-  const simulateGeneration = async () => {
+  const handleGenerateRoadmap = async () => {
+    setIsGenerating(true);
+    setCurrentStep(0);
+    setGenerationProgress(0);
+    toast.loading("Generating your personalized roadmap...");
+
     const steps = [
       'Analyzing your study materials...',
       'Identifying key concepts and topics...',
@@ -25,133 +33,52 @@ const RoadmapGenerator = ({ sessionData, updateSessionData, nextStep, prevStep }
     ];
 
     for (let i = 0; i < steps.length; i++) {
-      setCurrentStep(i);
-      setGenerationProgress((i + 1) * 20);
-      await new Promise(resolve => setTimeout(resolve, 800));
+        setCurrentStep(i);
+        setGenerationProgress(Math.min((i + 1) * 20, 99)); // Cap at 99% before final response
+        await new Promise(resolve => setTimeout(resolve, 800)); // Simulate async work
     }
 
     try {
-      // Call backend API to generate roadmap
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/roadmap/generate`, {
+      const response = await apiRequest(ENDPOINTS.ROADMAP.GENERATE, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
-          topic: sessionData.name || 'General Study Topic',
+          sessionId: sessionData.sessionId,
+          topic: sessionData.name,
+          description: sessionData.description || '',
           level: sessionData.preferences.level,
-          timeframe: '4 weeks'
+          timeframe: sessionData.timeframe || '4 weeks', // Assume timeframe can be in sessionData
+          goals: sessionData.goals || [], // Assume goals can be in sessionData
+          preferences: sessionData.preferences,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate roadmap');
+      if (response.roadmap) {
+        setRoadmap(response.roadmap);
+        updateSessionData({ roadmap: response.roadmap });
+        toast.dismiss();
+        toast.success('AI-powered roadmap generated successfully!');
+      } else {
+        throw new Error(response.message || 'Failed to generate roadmap.');
       }
-
-      const data = await response.json();
-      
-      // Parse the AI response into structured roadmap
-      const generatedRoadmap = parseAIRoadmap(data.roadmap);
-      setRoadmap(generatedRoadmap);
-      setIsGenerating(false);
-      toast.success('AI-powered roadmap generated successfully!');
     } catch (error) {
-      console.error('Roadmap API Error:', error);
-      // Fallback to sample roadmap
-      const generatedRoadmap = generateSampleRoadmap();
-      setRoadmap(generatedRoadmap);
+      console.error('Roadmap Generation API Error:', error);
+      toast.dismiss();
+      toast.error(error.message || 'Failed to generate roadmap. Using a placeholder.');
+      // Fallback to a simpler mock if API fails, but ideally the backend handles mocks
+      setRoadmap(`## Placeholder Roadmap\n\n**Overview:** Failed to generate a personalized roadmap. Here's a generic structure.\n\n**Modules:**\n- Introduction\n- Core Concepts\n- Advanced Topics\n- Review\n\n**Details:** Check your backend logs for errors related to roadmap generation.`);
+    } finally {
       setIsGenerating(false);
-      toast.success('Roadmap generated successfully!');
+      setGenerationProgress(100);
     }
   };
 
-  const parseAIRoadmap = (aiResponse) => {
-    // Parse AI response into structured roadmap format
-    // This is a simplified parser - in production you'd want more robust parsing
-    const topics = [
-      { id: 1, name: 'Foundation Concepts', duration: '2-3 hours', concepts: ['Basic principles', 'Key definitions'] },
-      { id: 2, name: 'Core Theory', duration: '3-4 hours', concepts: ['Main concepts', 'Important theorems'] },
-      { id: 3, name: 'Practical Applications', duration: '2-3 hours', concepts: ['Real-world examples', 'Problem solving'] },
-      { id: 4, name: 'Advanced Topics', duration: '4-5 hours', concepts: ['Complex scenarios', 'Expert techniques'] }
-    ];
-
-    return {
-      id: Date.now(),
-      title: `AI-Generated Learning Path: ${sessionData.name}`,
-      description: aiResponse.substring(0, 200) + '...',
-      estimatedTime: '12-15 hours',
-      difficulty: sessionData.preferences.level,
-      topics,
-      tools: sessionData.preferences.tools,
-      aiGenerated: true
-    };
-  };
-
-  const generateSampleRoadmap = () => {
-    const { level, style, tools } = sessionData.preferences;
-    const { subject } = sessionData;
-    
-    let topics = [];
-    let estimatedTime = 0;
-    
-    if (subject === 'Mathematics' || subject === 'Computer Science') {
-      topics = [
-        { id: 1, name: 'Foundation Concepts', duration: '2-3 hours', concepts: ['Basic principles', 'Key definitions', 'Fundamental formulas'] },
-        { id: 2, name: 'Core Theory', duration: '3-4 hours', concepts: ['Main concepts', 'Important theorems', 'Essential methods'] },
-        { id: 3, name: 'Practical Applications', duration: '2-3 hours', concepts: ['Real-world examples', 'Problem-solving techniques', 'Practice exercises'] },
-        { id: 4, name: 'Advanced Topics', duration: '3-4 hours', concepts: ['Complex concepts', 'Advanced techniques', 'Integration methods'] },
-        { id: 5, name: 'Review & Assessment', duration: '1-2 hours', concepts: ['Comprehensive review', 'Practice tests', 'Knowledge check'] }
-      ];
-      estimatedTime = 11;
-    } else if (subject === 'Biology' || subject === 'Chemistry') {
-      topics = [
-        { id: 1, name: 'Introduction & Basics', duration: '2-3 hours', concepts: ['Basic terminology', 'Fundamental concepts', 'Overview of the field'] },
-        { id: 2, name: 'Core Principles', duration: '4-5 hours', concepts: ['Main theories', 'Key mechanisms', 'Important processes'] },
-        { id: 3, name: 'Detailed Analysis', duration: '3-4 hours', concepts: ['Specific examples', 'Case studies', 'Detailed explanations'] },
-        { id: 4, name: 'Practical Applications', duration: '2-3 hours', concepts: ['Lab techniques', 'Real-world applications', 'Current research'] },
-        { id: 5, name: 'Integration & Review', duration: '2-3 hours', concepts: ['Connecting concepts', 'Comprehensive review', 'Final assessment'] }
-      ];
-      estimatedTime = 13;
-    } else {
-      topics = [
-        { id: 1, name: 'Introduction', duration: '1-2 hours', concepts: ['Overview', 'Basic concepts', 'Getting started'] },
-        { id: 2, name: 'Core Content', duration: '3-4 hours', concepts: ['Main topics', 'Key concepts', 'Essential information'] },
-        { id: 3, name: 'Deep Dive', duration: '2-3 hours', concepts: ['Detailed analysis', 'Examples', 'Practical applications'] },
-        { id: 4, name: 'Advanced Topics', duration: '2-3 hours', concepts: ['Complex concepts', 'Advanced techniques', 'Specialized areas'] },
-        { id: 5, name: 'Synthesis & Review', duration: '1-2 hours', concepts: ['Integration', 'Review', 'Assessment'] }
-      ];
-      estimatedTime = 9;
-    }
-
-    // Adjust based on level
-    if (level === 'beginner') {
-      topics.forEach(topic => {
-        topic.duration = topic.duration.replace(/\d+/g, (match) => Math.ceil(parseInt(match) * 1.5));
-      });
-      estimatedTime = Math.ceil(estimatedTime * 1.3);
-    } else if (level === 'advanced') {
-      topics.forEach(topic => {
-        topic.duration = topic.duration.replace(/\d+/g, (match) => Math.ceil(parseInt(match) * 0.8));
-      });
-      estimatedTime = Math.ceil(estimatedTime * 0.9);
-    }
-
-    return {
-      id: Date.now(),
-      topics,
-      estimatedTime,
-      level,
-      style,
-      tools,
-      generatedAt: new Date().toISOString(),
-      status: 'ready'
-    };
-  };
+  // Remove these as we're now using actual API for generation
+  // const simulateGeneration = async () => { ... };
+  // const parseAIRoadmap = (aiResponse) => { ... };
+  // const generateSampleRoadmap = () => { ... };
 
   const startGeneration = () => {
     setIsGenerating(true);
-    setCurrentStep(0);
-    setGenerationProgress(0);
   };
 
   const handleNext = () => {

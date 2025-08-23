@@ -16,25 +16,30 @@ const API_CONFIG = {
 // API endpoints - exported separately for easy access
 export const ENDPOINTS = {
   CHAT: {
-    MESSAGE: '/api/chat/message',
-    SESSION: '/api/chat/session'
+    MESSAGE: '/api/v1/chat/message',
+    SESSION: '/api/v1/chat/session',
+    BASIC: '/api/v1/chat/basic', // Basic chat endpoint
+    V2_BASIC: '/api/v1/chat/v2/basic' // V2 chat endpoint
   },
   SOURCES: {
-    UPLOAD: '/api/sources/upload',
-    URL: '/api/sources/url'
+    UPLOAD: '/api/v1/sources/upload',
+    URL: '/api/v1/sources/url'
   },
   ROADMAP: {
-    GENERATE: '/api/roadmap/generate',
-    PROGRESS: '/api/roadmap/progress'
+    GENERATE: '/api/v1/roadmap/generate',
+    PROGRESS: '/api/v1/roadmap/progress'
   },
   TOOLS: {
-    QUIZ: '/api/tools/generate-quiz',
-    FLASHCARDS: '/api/tools/generate-flashcards',
-    PROBLEMS: '/api/tools/generate-problems'
+    QUIZ: '/api/v1/tools/generate-quiz',
+    FLASHCARDS: '/api/v1/tools/generate-flashcards',
+    PROBLEMS: '/api/v1/tools/generate-problems',
+    MINDMAP: '/api/v1/tools/mindmap'
   },
   AUTH: {
-    LOGIN: '/api/auth/login',
-    REGISTER: '/api/auth/register'
+    LOGIN: '/api/v1/auth/login',
+    REGISTER: '/api/v1/auth/register',
+    LOGOUT: '/api/v1/auth/logout',
+    ME: '/api/v1/auth/me'
   }
 };
 
@@ -45,26 +50,55 @@ export const buildApiUrl = (endpoint) => {
 
 // Helper function to make API requests
 export const apiRequest = async (endpoint, options = {}) => {
-  const url = buildApiUrl(endpoint);
+  const url = endpoint.startsWith('http') ? endpoint : buildApiUrl(endpoint);
+  const isFormData = options.body instanceof FormData;
+
+  const headers = {
+    ...API_CONFIG.DEFAULT_HEADERS,
+    ...(options.headers || {})
+  };
+
+  // For FormData, let the browser set the Content-Type with the correct boundary
+  if (isFormData) {
+    delete headers['Content-Type'];
+  } else if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
+    // Stringify JSON body if it's not FormData
+    options.body = JSON.stringify(options.body);
+  }
+
   const config = {
     ...options,
-    headers: {
-      ...(options.isFormData ? {} : API_CONFIG.DEFAULT_HEADERS),
-      ...options.headers
-    }
+    headers,
   };
 
   // Remove isFormData flag from config before sending
   delete config.isFormData;
 
   try {
-    const response = await fetch(url, config);
+    const response = await fetch(url, {
+      ...options,
+      headers,
+      credentials: 'include' // Include cookies for authentication
+    });
+
+    // Handle non-JSON responses (like file downloads)
+    const contentType = response.headers.get('content-type');
+    let data;
     
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      data = await response.text();
     }
-    
-    return await response.json();
+
+    if (!response.ok) {
+      const error = new Error(data.message || 'Something went wrong');
+      error.status = response.status;
+      error.data = data;
+      throw error;
+    }
+
+    return data;
   } catch (error) {
     console.error("API failed:", error);
     alert("Backend is unreachable. Please try again later."); // Added for user feedback

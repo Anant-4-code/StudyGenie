@@ -23,7 +23,8 @@ const AdvancedChat = () => {
     },
     roadmap: null,
     chatHistory: [],
-    stats: {}
+    stats: {},
+    sessionId: null, // Initialize sessionId for advanced chat
   });
 
   const steps = [
@@ -58,6 +59,7 @@ const AdvancedChat = () => {
       },
       roadmap: null,
       chatHistory: [],
+      sessionId: null, // Reset sessionId on restart
       stats: {}
     });
   };

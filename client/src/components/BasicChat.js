@@ -72,7 +72,7 @@ const BasicChat = () => {
         method: 'POST',
         body: JSON.stringify({
           message: messageContent,
-          sessionId: 'basic-chat-' + Date.now()
+          sessionId: sessionId // Use the stored sessionId
         }),
       });
       
@@ -91,29 +91,13 @@ const BasicChat = () => {
       const aiResponse = {
         id: Date.now() + 1,
         type: 'ai',
-        content: generateAIResponse(messageContent),
+        content: 'Sorry, I couldn\'t generate a response. Please try again.',
         timestamp: new Date()
       };
       setMessages(prev => [...prev, aiResponse]);
       toast.error('Using offline mode. Start the server for full AI features.');
       setIsLoading(false);
     }
-  };
-
-  const generateAIResponse = (userInput) => {
-    // Simple response generation for demo purposes
-    // In production, this would be replaced with actual AI API calls
-    const responses = [
-      "That's a great question! Let me explain this concept step by step...",
-      "I understand what you're asking about. Here's what you need to know...",
-      "Excellent question! This is a fundamental concept that many students find challenging...",
-      "I'm glad you asked about this! Let me break it down for you...",
-      "This is a common area of confusion. Let me clarify this for you..."
-    ];
-    
-    return responses[Math.floor(Math.random() * responses.length)] + 
-           " " + userInput + " is an important topic that relates to several key concepts. " +
-           "Would you like me to elaborate on any specific aspect or provide some examples?";
   };
 
   const handleKeyPress = (e) => {
