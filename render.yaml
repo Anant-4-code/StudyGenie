@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: studygenie-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        fromDatabase:
+          name: studygenie-db
+          property: connectionString
+    plan: free
+    numInstances: 1
+    healthCheckPath: /api/health
+    autoDeploy: true
+
+databases:
+  - name: studygenie-db
+    databaseName: studygenie
+    user: studygenie_user
+    plan: free
