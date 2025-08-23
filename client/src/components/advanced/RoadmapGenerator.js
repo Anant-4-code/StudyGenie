@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Target, Brain, Clock, CheckCircle, Edit3, ArrowRight, Sparkles, BookOpen } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
+import { Target, Brain, Clock, CheckCircle, Edit3, Sparkles, BookOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { apiRequest, ENDPOINTS } from '../../config/api'; // Import API utilities
 
@@ -11,18 +11,22 @@ const RoadmapGenerator = ({ sessionData, updateSessionData, nextStep, prevStep }
   const [generationProgress, setGenerationProgress] = useState(0);
 
   useEffect(() => {
-    if (isGenerating && !roadmap) {
-      handleGenerateRoadmap(); // Start actual generation
-    } else if (roadmap) {
+    const initRoadmap = async () => {
+      if (isGenerating && !roadmap) {
+        await handleGenerateRoadmap(); // Start actual generation
+      } else if (roadmap) {
         setIsGenerating(false);
-    }
-  }, [isGenerating, roadmap]);
+      }
+    };
+    
+    initRoadmap();
+  }, [isGenerating, roadmap, handleGenerateRoadmap, sessionData, updateSessionData]);
 
-  const handleGenerateRoadmap = async () => {
+  const handleGenerateRoadmap = useCallback(async () => {
     setIsGenerating(true);
     setCurrentStep(0);
     setGenerationProgress(0);
-    toast.loading("Generating your personalized roadmap...");
+    const loadingToast = toast.loading("Generating your personalized roadmap...");
 
     const steps = [
       'Analyzing your study materials...',
@@ -33,9 +37,10 @@ const RoadmapGenerator = ({ sessionData, updateSessionData, nextStep, prevStep }
     ];
 
     for (let i = 0; i < steps.length; i++) {
-        setCurrentStep(i);
-        setGenerationProgress(Math.min((i + 1) * 20, 99)); // Cap at 99% before final response
-        await new Promise(resolve => setTimeout(resolve, 800)); // Simulate async work
+      setCurrentStep(i);
+      setGenerationProgress(Math.min((i + 1) * 20, 99)); // Cap at 99% before final response
+      toast.loading(steps[i], { id: loadingToast });
+      await new Promise(resolve => setTimeout(resolve, 800)); // Simulate async work
     }
 
     try {
@@ -46,8 +51,8 @@ const RoadmapGenerator = ({ sessionData, updateSessionData, nextStep, prevStep }
           topic: sessionData.name,
           description: sessionData.description || '',
           level: sessionData.preferences.level,
-          timeframe: sessionData.timeframe || '4 weeks', // Assume timeframe can be in sessionData
-          goals: sessionData.goals || [], // Assume goals can be in sessionData
+          timeframe: sessionData.timeframe || '4 weeks',
+          goals: sessionData.goals || [],
           preferences: sessionData.preferences,
         }),
       });
@@ -55,27 +60,22 @@ const RoadmapGenerator = ({ sessionData, updateSessionData, nextStep, prevStep }
       if (response.roadmap) {
         setRoadmap(response.roadmap);
         updateSessionData({ roadmap: response.roadmap });
-        toast.dismiss();
+        toast.dismiss(loadingToast);
         toast.success('AI-powered roadmap generated successfully!');
       } else {
         throw new Error(response.message || 'Failed to generate roadmap.');
       }
     } catch (error) {
       console.error('Roadmap Generation API Error:', error);
-      toast.dismiss();
+      toast.dismiss(loadingToast);
       toast.error(error.message || 'Failed to generate roadmap. Using a placeholder.');
-      // Fallback to a simpler mock if API fails, but ideally the backend handles mocks
+      // Fallback to a simpler mock if API fails
       setRoadmap(`## Placeholder Roadmap\n\n**Overview:** Failed to generate a personalized roadmap. Here's a generic structure.\n\n**Modules:**\n- Introduction\n- Core Concepts\n- Advanced Topics\n- Review\n\n**Details:** Check your backend logs for errors related to roadmap generation.`);
     } finally {
       setIsGenerating(false);
       setGenerationProgress(100);
     }
-  };
-
-  // Remove these as we're now using actual API for generation
-  // const simulateGeneration = async () => { ... };
-  // const parseAIRoadmap = (aiResponse) => { ... };
-  // const generateSampleRoadmap = () => { ... };
+  }, [sessionData, updateSessionData]);
 
   const startGeneration = () => {
     setIsGenerating(true);

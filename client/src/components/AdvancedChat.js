@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ArrowLeft, Plus, Settings, Brain, Target, Zap } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import toast from 'react-hot-toast';
 import SessionSetup from './advanced/SessionSetup';
 import PreferencesSetup from './advanced/PreferencesSetup';
 import RoadmapGenerator from './advanced/RoadmapGenerator';
