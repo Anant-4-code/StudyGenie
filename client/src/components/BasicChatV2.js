@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Send, UploadCloud, X, FileText, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
-import { apiRequest } from '../config/api';
+import { apiRequest, ENDPOINTS } from '../config/api';
 import toast from 'react-hot-toast';
 
 const BasicChatV2 = () => {
@@ -79,8 +79,8 @@ const BasicChatV2 = () => {
         formData.append('file', file);
       }
 
-      // Use the new chat/v2/basic endpoint
-      const response = await apiRequest('/api/v1/chat/v2/basic', {
+      // Use the chatV2/basic endpoint
+      const response = await apiRequest(ENDPOINTS.CHAT.BASIC_V2, {
         method: 'POST',
         body: formData,
         // Don't set Content-Type header, let the browser set it with the correct boundary
