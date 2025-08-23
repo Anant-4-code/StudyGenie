@@ -17,16 +17,30 @@
     "react-markdown": "^9.0.1",
     "react-router-dom": "^6.20.1",
     "react-scripts": "5.0.1",
-    "react-syntax-highlighter": "^15.5.0",
+    "@jridgewell/sourcemap-codec": "^1.4.15",
     "recharts": "^2.8.0",
     "tailwind-merge": "^2.0.0",
-    "zustand": "^4.4.7"
+    "zustand": "^4.4.7",
+    "@rollup/plugin-terser": "^0.4.4",
+    "workbox-core": "^7.0.0",
+    "workbox-expiration": "^7.0.0",
+    "workbox-precaching": "^7.0.0",
+    "workbox-routing": "^7.0.0",
+    "workbox-strategies": "^7.0.0",
+    "workbox-window": "^7.0.0"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "postinstall": "npx workbox-cli copyLibraries build/"
+  },
+  "resolutions": {
+    "sourcemap-codec": "^1.4.15",
+    "rimraf": "^5.0.0",
+    "workbox-cacheable-response": "^7.0.0",
+    "workbox-google-analytics": "^7.0.0"
   },
   "eslintConfig": {
     "extends": [
