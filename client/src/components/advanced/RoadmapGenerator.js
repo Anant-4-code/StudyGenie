@@ -10,18 +10,6 @@ const RoadmapGenerator = ({ sessionData, updateSessionData, nextStep, prevStep }
   const [currentStep, setCurrentStep] = useState(0);
   const [generationProgress, setGenerationProgress] = useState(0);
 
-  useEffect(() => {
-    const initRoadmap = async () => {
-      if (isGenerating && !roadmap) {
-        await handleGenerateRoadmap(); // Start actual generation
-      } else if (roadmap) {
-        setIsGenerating(false);
-      }
-    };
-    
-    initRoadmap();
-  }, [isGenerating, roadmap, handleGenerateRoadmap, sessionData, updateSessionData]);
-
   const handleGenerateRoadmap = useCallback(async () => {
     setIsGenerating(true);
     setCurrentStep(0);
@@ -76,6 +64,18 @@ const RoadmapGenerator = ({ sessionData, updateSessionData, nextStep, prevStep }
       setGenerationProgress(100);
     }
   }, [sessionData, updateSessionData]);
+
+  useEffect(() => {
+    const initRoadmap = async () => {
+      if (isGenerating && !roadmap) {
+        await handleGenerateRoadmap(); // Start actual generation
+      } else if (roadmap) {
+        setIsGenerating(false);
+      }
+    };
+    
+    initRoadmap();
+  }, [isGenerating, roadmap, handleGenerateRoadmap]);
 
   const startGeneration = () => {
     setIsGenerating(true);

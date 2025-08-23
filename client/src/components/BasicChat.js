@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { apiRequest, ENDPOINTS } from '../config/api';
 import { useDropzone } from 'react-dropzone';
@@ -41,7 +39,7 @@ const BasicChat = () => {
     }
   }, []);
 
-  const { getRootProps, getInputProps } = useDropzone({
+  const { getRootProps } = useDropzone({
     onDrop,
     accept: {
       'application/pdf': ['.pdf'],

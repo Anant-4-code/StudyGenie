@@ -512,19 +512,19 @@ const LandingPage = () => {
                 The AI-powered tutor that transforms your study materials into interactive learning experiences.
               </p>
               <div className="flex space-x-4">
-                <a href="#" className="text-slate-400 hover:text-white transition-colors">
+                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors" aria-label="Facebook">
                   <Facebook className="w-6 h-6" />
                 </a>
-                <a href="#" className="text-slate-400 hover:text-white transition-colors">
+                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors" aria-label="Twitter">
                   <Twitter className="w-6 h-6" />
                 </a>
-                <a href="#" className="text-slate-400 hover:text-white transition-colors">
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors" aria-label="Instagram">
                   <Instagram className="w-6 h-6" />
                 </a>
-                <a href="#" className="text-slate-400 hover:text-white transition-colors">
+                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors" aria-label="LinkedIn">
                   <Linkedin className="w-6 h-6" />
                 </a>
-                <a href="#" className="text-slate-400 hover:text-white transition-colors">
+                <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white transition-colors" aria-label="GitHub">
                   <Github className="w-6 h-6" />
                 </a>
               </div>
@@ -533,20 +533,20 @@ const LandingPage = () => {
             <div>
               <h4 className="text-white font-semibold mb-4">Product</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Features</a></li>
-                <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="text-slate-400 hover:text-white transition-colors">API</a></li>
-                <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Documentation</a></li>
+                <li><button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="text-slate-400 hover:text-white transition-colors text-left">Features</button></li>
+                <li><button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="text-slate-400 hover:text-white transition-colors text-left">Pricing</button></li>
+                <li><button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="text-slate-400 hover:text-white transition-colors text-left">API</button></li>
+                <li><button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="text-slate-400 hover:text-white transition-colors text-left">Documentation</button></li>
               </ul>
             </div>
             
             <div>
               <h4 className="text-white font-semibold mb-4">Company</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-slate-400 hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="text-slate-400 hover:text-white transition-colors">Contact</a></li>
+                <li><button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="text-slate-400 hover:text-white transition-colors text-left">About</button></li>
+                <li><button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="text-slate-400 hover:text-white transition-colors text-left">Blog</button></li>
+                <li><button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="text-slate-400 hover:text-white transition-colors text-left">Careers</button></li>
+                <li><button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="text-slate-400 hover:text-white transition-colors text-left">Contact</button></li>
               </ul>
             </div>
           </div>
@@ -556,9 +556,9 @@ const LandingPage = () => {
               © 2024 StudyGenie. All rights reserved.
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
-              <a href="#" className="text-slate-400 hover:text-white text-sm transition-colors">Privacy Policy</a>
-              <a href="#" className="text-slate-400 hover:text-white text-sm transition-colors">Terms of Service</a>
-              <a href="#" className="text-slate-400 hover:text-white text-sm transition-colors">Cookie Policy</a>
+              <button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="text-slate-400 hover:text-white text-sm transition-colors">Privacy Policy</button>
+              <button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="text-slate-400 hover:text-white text-sm transition-colors">Terms of Service</button>
+              <button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="text-slate-400 hover:text-white text-sm transition-colors">Cookie Policy</button>
             </div>
           </div>
         </div>

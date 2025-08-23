@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import { ArrowLeft, Plus, Settings, Brain, Target, Zap } from 'lucide-react';
 import SessionSetup from './advanced/SessionSetup';
 import PreferencesSetup from './advanced/PreferencesSetup';

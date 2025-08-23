@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import LandingPage from './components/LandingPage';
-import BasicChat from './components/BasicChat';
 import BasicChatV2 from './components/BasicChatV2';
 import AdvancedChat from './components/AdvancedChat';
 import Navbar from './components/Navbar';
