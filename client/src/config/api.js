@@ -18,8 +18,7 @@ export const ENDPOINTS = {
   CHAT: {
     MESSAGE: '/api/v1/chat/message',
     SESSION: '/api/v1/chat/session',
-    BASIC: '/api/v1/chat/basic', // Basic chat endpoint
-    V2_BASIC: '/api/v1/chat/v2/basic' // V2 chat endpoint
+    BASIC: '/api/v1/chat/basic' // AI-driven chat endpoint
   },
   SOURCES: {
     UPLOAD: '/api/v1/sources/upload',
@@ -49,30 +48,33 @@ export const buildApiUrl = (endpoint) => {
 };
 
 // Helper function to make API requests
-export const apiRequest = async (endpoint, options = {}) => {
+export const apiRequest = async (endpoint, options = {}, isFormData = false) => {
   const url = endpoint.startsWith('http') ? endpoint : buildApiUrl(endpoint);
-  const isFormData = options.body instanceof FormData;
-
+  
+  // Clone headers to avoid mutating the original
   const headers = {
     ...API_CONFIG.DEFAULT_HEADERS,
     ...(options.headers || {})
   };
 
-  // For FormData, let the browser set the Content-Type with the correct boundary
-  if (isFormData) {
-    delete headers['Content-Type'];
-  } else if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
-    // Stringify JSON body if it's not FormData
-    options.body = JSON.stringify(options.body);
+  // Handle FormData or JSON body
+  let body = options.body;
+  if (body) {
+    if (isFormData || body instanceof FormData) {
+      // For FormData, let the browser set the Content-Type with the correct boundary
+      delete headers['Content-Type'];
+    } else if (typeof body === 'object') {
+      // Stringify JSON body
+      body = JSON.stringify(body);
+      headers['Content-Type'] = 'application/json';
+    }
   }
 
   const config = {
     ...options,
     headers,
+    body
   };
-
-  // Remove isFormData flag from config before sending
-  delete config.isFormData;
 
   try {
     const response = await fetch(url, {

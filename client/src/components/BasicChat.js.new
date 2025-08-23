@@ -18,25 +18,26 @@ const BasicChat = () => {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sourceProvided, setSourceProvided] = useState(false);
-  const [sourceType, setSourceType] = useState(null); // 'file', 'link', 'text'
+  const [sourceType, setSourceType] = useState(null);
   const [sourceFile, setSourceFile] = useState(null);
   const [sourceLink, setSourceLink] = useState('');
   const [sourceText, setSourceText] = useState('');
   const [isProcessingSource, setIsProcessingSource] = useState(false);
-  const [sessionId, setSessionId] = useState(null); // To store session ID after source upload
+  const [sessionId, setSessionId] = useState(null);
   const messagesEndRef = useRef(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, scrollToBottom]);
 
   const onDrop = useCallback((acceptedFiles) => {
     if (acceptedFiles.length > 0) {
       setSourceFile(acceptedFiles[0]);
+      setSourceType('file');
       toast.success(`File selected: ${acceptedFiles[0].name}`);
     }
   }, []);
@@ -68,69 +69,6 @@ const BasicChat = () => {
     setIsLoading(true);
 
     try {
-      // First check if we need to process a source
-      if (!sourceProvided && !sessionId) {
-        // Handle source processing
-        if (sourceType === 'file' && sourceFile) {
-          const formData = new FormData();
-          formData.append('file', sourceFile);
-          
-          const uploadResponse = await apiRequest(ENDPOINTS.SOURCES.UPLOAD, {
-            method: 'POST',
-            body: formData,
-            headers: {
-              // Let the browser set the content-type with boundary
-              'Accept': 'application/json'
-            }
-          }, true); // true to skip JSON parsing for FormData
-          
-          setSessionId(uploadResponse.sessionId);
-          setSourceProvided(true);
-          
-          const aiResponse = {
-            id: Date.now() + 1,
-            type: 'ai',
-            content: 'Great! I\'ve processed your document. You can now ask me questions about it.',
-            timestamp: new Date()
-          };
-          setMessages(prev => [...prev, aiResponse]);
-          setIsLoading(false);
-          return;
-        } else if (sourceType === 'link' && sourceLink) {
-          const response = await apiRequest(ENDPOINTS.SOURCES.URL, {
-            method: 'POST',
-            body: JSON.stringify({ url: sourceLink })
-          });
-          
-          setSessionId(response.sessionId);
-          setSourceProvided(true);
-          
-          const aiResponse = {
-            id: Date.now() + 1,
-            type: 'ai',
-            content: `I've processed the content from ${sourceLink}. What would you like to know?`,
-            timestamp: new Date()
-          };
-          setMessages(prev => [...prev, aiResponse]);
-          setIsLoading(false);
-          return;
-        } else if (sourceType === 'text' && sourceText) {
-          // For text sources, we'll just use it as context in the first message
-          setSourceProvided(true);
-          
-          const aiResponse = {
-            id: Date.now() + 1,
-            type: 'ai',
-            content: 'I\'ve noted your text. What would you like to know about it?',
-            timestamp: new Date()
-          };
-          setMessages(prev => [...prev, aiResponse]);
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      // Regular chat message with context
       const requestBody = {
         message: messageContent,
         sessionId: sessionId,
@@ -166,7 +104,7 @@ const BasicChat = () => {
     }
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -181,7 +119,6 @@ const BasicChat = () => {
 
     const formData = new FormData();
     let endpoint = '';
-    let sourceContent = '';
 
     try {
       if (sourceType === 'file' && sourceFile) {
@@ -192,12 +129,10 @@ const BasicChat = () => {
         formData.append('sourceType', 'link');
         formData.append('link', sourceLink.trim());
         endpoint = ENDPOINTS.SOURCES.UPLOAD;
-        sourceContent = sourceLink.trim();
       } else if (sourceType === 'text' && sourceText.trim()) {
         formData.append('sourceType', 'text');
         formData.append('text', sourceText.trim());
         endpoint = ENDPOINTS.SOURCES.UPLOAD;
-        sourceContent = sourceText.trim();
       } else {
         toast.error('Please provide a valid source input.');
         setIsProcessingSource(false);
@@ -207,7 +142,7 @@ const BasicChat = () => {
       const data = await apiRequest(endpoint, {
         method: 'POST',
         body: formData,
-        isFormData: true, // Custom flag to inform apiRequest not to set Content-Type header
+        isFormData: true,
       });
 
       if (data.sessionId) {
@@ -236,7 +171,6 @@ const BasicChat = () => {
     }
   };
 
-  // Source input component
   const renderSourceInput = () => {
     if (sourceProvided) return null;
 
@@ -255,10 +189,22 @@ const BasicChat = () => {
               onChange={() => setSourceType('file')}
             />
             <label htmlFor="file-source" className="flex-1">
-              <div className={`p-4 border-2 border-dashed rounded-md cursor-pointer ${sourceType === 'file' ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}`}>
+              <div 
+                {...getRootProps()}
+                className={`p-4 border-2 border-dashed rounded-md cursor-pointer ${
+                  sourceType === 'file' 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : 'border-gray-300 hover:border-gray-400'
+                } ${isDragActive ? 'border-blue-500 bg-blue-50' : ''}`}
+              >
+                <input {...getInputProps()} />
                 <div className="flex flex-col items-center justify-center space-y-2">
-                  <UploadCloud className={`w-6 h-6 ${sourceType === 'file' ? 'text-blue-500' : 'text-gray-400'}`} />
-                  <span className="text-sm font-medium">Upload a document</span>
+                  <UploadCloud className={`w-6 h-6 ${
+                    sourceType === 'file' || isDragActive ? 'text-blue-500' : 'text-gray-400'
+                  }`} />
+                  <span className="text-sm font-medium">
+                    {isDragActive ? 'Drop the file here' : 'Upload a document'}
+                  </span>
                   <span className="text-xs text-gray-500">PDF, DOCX, or TXT (max 10MB)</span>
                   {sourceFile && (
                     <span className="text-xs text-blue-600 mt-1">
@@ -266,12 +212,6 @@ const BasicChat = () => {
                     </span>
                   )}
                 </div>
-                <input
-                  type="file"
-                  className="hidden"
-                  accept=".pdf,.docx,.txt,.md"
-                  onChange={(e) => e.target.files[0] && setSourceFile(e.target.files[0])}
-                />
               </div>
             </label>
           </div>
@@ -297,7 +237,9 @@ const BasicChat = () => {
                 <input
                   type="url"
                   id="link-input"
-                  className={`flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border ${sourceType === 'link' ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-300'} focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                  className={`flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border ${
+                    sourceType === 'link' ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-300'
+                  } focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                   placeholder="https://example.com"
                   value={sourceLink}
                   onChange={(e) => setSourceLink(e.target.value)}
@@ -324,7 +266,9 @@ const BasicChat = () => {
               <textarea
                 id="text-input"
                 rows={4}
-                className={`shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border ${sourceType === 'text' ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-300'} rounded-md`}
+                className={`shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border ${
+                  sourceType === 'text' ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-300'
+                } rounded-md`}
                 placeholder="Paste your text here..."
                 value={sourceText}
                 onChange={(e) => setSourceText(e.target.value)}
@@ -338,8 +282,19 @@ const BasicChat = () => {
             <button
               type="button"
               onClick={handleProcessSource}
-              disabled={isProcessingSource || !sourceType || (sourceType === 'file' && !sourceFile) || (sourceType === 'link' && !sourceLink.trim()) || (sourceType === 'text' && !sourceText.trim())}
-              className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${isProcessingSource || !sourceType || (sourceType === 'file' && !sourceFile) || (sourceType === 'link' && !sourceLink.trim()) || (sourceType === 'text' && !sourceText.trim()) ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'}`}
+              disabled={isProcessingSource || !sourceType || 
+                (sourceType === 'file' && !sourceFile) || 
+                (sourceType === 'link' && !sourceLink.trim()) || 
+                (sourceType === 'text' && !sourceText.trim())
+              }
+              className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+                isProcessingSource || !sourceType || 
+                (sourceType === 'file' && !sourceFile) || 
+                (sourceType === 'link' && !sourceLink.trim()) || 
+                (sourceType === 'text' && !sourceText.trim())
+                  ? 'bg-blue-300 cursor-not-allowed' 
+                  : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+              }`}
             >
               {isProcessingSource ? (
                 <>
@@ -373,7 +328,7 @@ const BasicChat = () => {
               <h1 className="text-xl font-semibold text-gray-900">StudyGenie Chat</h1>
               <p className="text-sm text-gray-500">AI-powered learning assistant</p>
             </div>
-            <div className="w-20"></div> {/* Spacer for centering */}
+            <div className="w-20"></div>
           </div>
         </div>
       </div>
@@ -434,7 +389,7 @@ const BasicChat = () => {
               <textarea
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyPress}
+                onKeyDown={handleKeyDown}
                 placeholder={sourceProvided ? "Type your message..." : "Please provide a learning source first"}
                 disabled={!sourceProvided || isLoading}
                 className={`w-full pr-12 pl-4 py-3 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
@@ -466,11 +421,9 @@ const BasicChat = () => {
             )}
           </div>
         </div>
-
       </div>
     </div>
   );
 };
 
 export default BasicChat;
-

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyGenie - Fresh Start</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            margin-top: 50px;
+            text-align: center;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: left;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>StudyGenie Server</h1>
+        <p>A fresh start for the StudyGenie backend</p>
+        
+        <div id="status" class="status">
+            Checking server status...
+        </div>
+        
+        <div id="server-info" style="display: none;">
+            <h2>Server Information</h2>
+            <pre id="server-data">Loading...</pre>
+        </div>
+    </div>
+
+    <script>
+        // Check server status
+        async function checkStatus() {
+            const statusElement = document.getElementById('status');
+            const serverInfo = document.getElementById('server-info');
+            const serverData = document.getElementById('server-data');
+            
+            try {
+                const response = await fetch('/api/status');
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                const data = await response.json();
+                
+                statusElement.textContent = '✅ Server is running and responding correctly';
+                statusElement.className = 'status success';
+                
+                // Display server information
+                serverData.textContent = JSON.stringify(data, null, 2);
+                serverInfo.style.display = 'block';
+                
+                // Log to console for debugging
+                console.log('Server status:', data);
+                
+            } catch (error) {
+                statusElement.textContent = `❌ Error connecting to server: ${error.message}`;
+                statusElement.className = 'status error';
+                console.error('Status check failed:', error);
+            }
+        }
+
+        // Run status check when page loads
+        document.addEventListener('DOMContentLoaded', checkStatus);
+    </script>
+</body>
+</html>
