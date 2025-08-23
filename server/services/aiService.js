@@ -1,18 +1,50 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai'); // Re-enabled GoogleGenerativeAI import
-const { v4: uuidv4 } = require('uuid'); // For unique session IDs
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { v4: uuidv4 } = require('uuid');
 
-// Access your API key as an environment variable (preferable for security)
+// Access your API key as an environment variable
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const { sessionSources } = require('../utils/sessionStore'); // Import sessionSources from shared store
+const { sessionSources } = require('../utils/sessionStore');
 
-// Initialize Google Generative AI only if API key is provided and not a placeholder
+// Initialize Google Generative AI with enhanced configuration
 let genAI;
+let chatModel;
+
 if (GEMINI_API_KEY && GEMINI_API_KEY !== 'YOUR_GEMINI_API_KEY') {
   genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-  console.log("Gemini API initialized.");
+  chatModel = genAI.getGenerativeModel({ 
+    model: "gemini-pro",
+    generationConfig: {
+      temperature: 0.7,
+      topP: 0.9,
+      topK: 40,
+      maxOutputTokens: 2048,
+    },
+    safetySettings: [
+      {
+        category: "HARM_CATEGORY_HARASSMENT",
+        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+      },
+      {
+        category: "HARM_CATEGORY_HATE_SPEECH",
+        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+      },
+      {
+        category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+      },
+      {
+        category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+        threshold: "BLOCK_MEDIUM_AND_ABOVE"
+      },
+    ],
+  });
+  console.log("Gemini API initialized with enhanced configuration.");
 } else {
   console.warn("Gemini API key not found or is a placeholder. Using mock AI responses.");
 }
+
+// In-memory store for chat sessions
+const chatSessions = new Map();
 
 // // In-memory store for session-specific sources (for advanced chat context)
 // const sessionSources = {}; // Removed as it's now from shared module
@@ -26,20 +58,81 @@ const AIService = {
    * @returns {Promise<string>} - The AI-generated response.
    */
   async generateResponse(prompt, type = 'basic', context = {}) {
-    if (genAI) {
-      try {
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        return response.text();
-      } catch (error) {
-        console.error("Error generating content with Gemini API:", error);
-        // Fallback to mock response on API error
-        return this.generateMockResponse(prompt, type, context);
-      }
-    } else {
-      // Use mock response if API key is not set
+    if (!chatModel) {
       return this.generateMockResponse(prompt, type, context);
+    }
+
+    try {
+      // Add context to the prompt for better responses
+      let enhancedPrompt = prompt;
+      if (context.topic) {
+        enhancedPrompt = `[Topic: ${context.topic}] ${enhancedPrompt}`;
+      }
+      if (context.previousMessages?.length) {
+        const history = context.previousMessages
+          .map(msg => `${msg.role === 'user' ? 'User' : 'AI'}: ${msg.content}`)
+          .join('\n');
+        enhancedPrompt = `Previous conversation context:\n${history}\n\nCurrent message: ${enhancedPrompt}`;
+      }
+
+      const result = await chatModel.generateContent(enhancedPrompt);
+      const response = await result.response;
+      return response.text();
+    } catch (error) {
+      console.error("Error generating content with Gemini API:", error);
+      return this.generateMockResponse(prompt, type, context);
+    }
+  },
+
+  /**
+   * Manages chat sessions and generates contextual responses
+   * @param {string} sessionId - The ID of the current session
+   * @param {string} userMessage - The user's message
+   * @param {Array} messageHistory - Previous messages in the conversation
+   * @param {Object} context - Additional context for the conversation
+   * @returns {Promise<string>} - The AI's response
+   */
+  async chat(sessionId, userMessage, messageHistory = [], context = {}) {
+    try {
+      if (!chatSessions.has(sessionId)) {
+        chatSessions.set(sessionId, {
+          history: [],
+          context: { ...context }
+        });
+      }
+
+      const session = chatSessions.get(sessionId);
+      
+      // Add the user's message to the history
+      session.history.push({
+        role: 'user',
+        content: userMessage,
+        timestamp: new Date().toISOString()
+      });
+
+      // Generate response with full context
+      const response = await this.generateResponse(userMessage, 'chat', {
+        ...context,
+        previousMessages: session.history.slice(-10), // Keep last 10 messages for context
+        sessionId
+      });
+
+      // Add AI's response to history
+      session.history.push({
+        role: 'assistant',
+        content: response,
+        timestamp: new Date().toISOString()
+      });
+
+      // Prune old messages to prevent memory issues
+      if (session.history.length > 20) {
+        session.history = session.history.slice(-20);
+      }
+
+      return response;
+    } catch (error) {
+      console.error('Error in chat session:', error);
+      return "I'm having trouble responding right now. Please try again later.";
     }
   },
 

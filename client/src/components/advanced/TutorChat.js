@@ -37,17 +37,38 @@ const TutorChat = ({ sessionData, updateSessionData, nextStep, prevStep }) => {
       topic: sessionData.roadmap?.topics[currentTopic]?.id
     };
 
+    // Add user message to UI immediately
     setMessages(prev => [...prev, userMessage]);
     const messageContent = inputValue.trim();
     setInputValue('');
     setIsLoading(true);
 
     try {
-      const data = await apiRequest(ENDPOINTS.CHAT.MESSAGE, {
+      // Create a stable session ID based on the study session
+      const sessionId = `tutor-session-${sessionData.name}-${sessionData.roadmap?.topics[currentTopic]?.id || 'general'}`;
+      
+      // Prepare context for the AI
+      const context = {
+        topic: sessionData.roadmap?.topics[currentTopic]?.name || 'General Learning',
+        learningStyle: sessionData.preferences?.style || 'interactive',
+        level: sessionData.preferences?.level || 'beginner',
+        sourceMaterial: sessionData.sources?.[0]?.name || 'Study Material'
+      };
+
+      // Get the last few messages for context
+      const recentMessages = messages.slice(-5).map(msg => ({
+        role: msg.type === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      }));
+
+      // Call the enhanced chat endpoint
+      const data = await apiRequest(ENDPOINTS.AI.CHAT, {
         method: 'POST',
         body: JSON.stringify({
+          sessionId,
           message: messageContent,
-          sessionId: `advanced-chat-${sessionData.name}-${Date.now()}`
+          context,
+          messageHistory: recentMessages
         }),
       });
       

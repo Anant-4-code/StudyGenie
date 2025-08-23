@@ -18,7 +18,12 @@ export const ENDPOINTS = {
   CHAT: {
     MESSAGE: '/api/v1/chat/message',
     SESSION: '/api/v1/chat/session',
-    BASIC: '/api/v1/chat/basic' // AI-driven chat endpoint
+    BASIC: '/api/v1/chat/basic', // AI-driven chat endpoint
+    AI: '/api/v1/chat/ai' // Enhanced AI chat endpoint with context
+  },
+  AI: {
+    CHAT: '/api/v1/ai/chat', // Main AI chat endpoint with session management
+    GENERATE: '/api/v1/ai/generate' // General AI generation endpoint
   },
   SOURCES: {
     UPLOAD: '/api/v1/sources/upload',

@@ -132,6 +132,7 @@ router.use('/sources', require('./routes/sources'));
 router.use('/roadmap', require('./routes/roadmap'));
 router.use('/tools', require('./routes/tools'));
 router.use('/auth', require('./routes/auth'));
+router.use('/ai', require('./routes/aiChat')); // Add AI chat routes
 
 // Chat V2 routes - keep both paths for backward compatibility
 router.use('/chat/v2', require('./routes/chatV2'));
