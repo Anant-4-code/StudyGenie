@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Target, Brain, Clock, CheckCircle, Edit3, Sparkles, BookOpen } from 'lucide-react';
+import { Target, Brain, Clock, CheckCircle, Edit3, Sparkles, BookOpen, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { apiRequest, ENDPOINTS } from '../../config/api'; // Import API utilities
 

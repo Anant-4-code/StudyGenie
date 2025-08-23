@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, Settings, Brain, Target, Zap } from 'lucide-react';
 import SessionSetup from './advanced/SessionSetup';
 import PreferencesSetup from './advanced/PreferencesSetup';

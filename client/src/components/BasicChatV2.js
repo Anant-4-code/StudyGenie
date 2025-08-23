@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { Send, UploadCloud, X, FileText, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { apiRequest } from '../config/api';
